@@ -1,13 +1,13 @@
 <?php
 
 ########################################################################
-# Extension Manager/Repository config file for ext: "tsparser"
+# Extension Manager/Repository config file for ext "tsparser".
 #
-# Auto generated 03-11-2008 07:46
+# Auto generated 06-12-2011 19:40
 #
 # Manual updates:
-# Only the data in the array - anything else is removed by next write.
-# "version" and "dependencies" must not be touched!
+# Only the data in the array - everything else is removed by next
+# writing. "version" and "dependencies" must not be touched!
 ########################################################################
 
 $EM_CONF[$_EXTKEY] = array(
@@ -29,17 +29,17 @@ $EM_CONF[$_EXTKEY] = array(
 	'clearCacheOnLoad' => 0,
 	'lockType' => '',
 	'author_company' => 'jambage.com',
-	'version' => '0.0.1',
+	'version' => '0.0.2',
 	'constraints' => array(
 		'depends' => array(
-			'typo3' => '3.8.0-4.5.99',
+			'typo3' => '3.8.0-4.4.99',
 		),
 		'conflicts' => array(
 		),
 		'suggests' => array(
 		),
 	),
-	'_md5_values_when_last_written' => 'a:6:{s:9:"ChangeLog";s:4:"ae35";s:12:"ext_icon.gif";s:4:"1bdc";s:17:"ext_localconf.php";s:4:"65ea";s:14:"doc/manual.sxw";s:4:"d9f8";s:32:"xclass/class.user_cms_layout.php";s:4:"e425";s:25:"xclass/user_db_layout.php";s:4:"b6b9";}',
+	'_md5_values_when_last_written' => 'a:6:{s:9:"ChangeLog";s:4:"2afe";s:10:"README.txt";s:4:"ee2d";s:12:"ext_icon.gif";s:4:"4d2b";s:17:"ext_localconf.php";s:4:"8a72";s:14:"doc/manual.sxw";s:4:"c75d";s:40:"xclass/class.user_t3lib_tsparser_ext.php";s:4:"b66a";}',
 	'suggests' => array(
 	),
 );
