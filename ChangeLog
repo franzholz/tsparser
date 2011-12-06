@@ -1,0 +1,9 @@
+(add new changes on top of this file)
+
+2011-12-06 Franz Holzinger  <franz@ttproducts.de>
+
+	* Update for TYPO3 4.5.8
+
+2010-01-22 Franz Holzinger  <franz@ttproducts.de>
+
+	* Initial release built from class.t3lib_tsparser_ext.php 5482 2009-05-22
