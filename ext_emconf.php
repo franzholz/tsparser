@@ -3,7 +3,7 @@
 ########################################################################
 # Extension Manager/Repository config file for ext "tsparser".
 #
-# Auto generated 10-12-2011 15:20
+# Auto generated 07-01-2012 21:16
 #
 # Manual updates:
 # Only the data in the array - everything else is removed by next
@@ -29,7 +29,7 @@ $EM_CONF[$_EXTKEY] = array(
 	'clearCacheOnLoad' => 0,
 	'lockType' => '',
 	'author_company' => 'jambage.com',
-	'version' => '0.0.3',
+	'version' => '0.0.4',
 	'constraints' => array(
 		'depends' => array(
 			'typo3' => '3.8.0-4.6.99',
@@ -39,7 +39,7 @@ $EM_CONF[$_EXTKEY] = array(
 		'suggests' => array(
 		),
 	),
-	'_md5_values_when_last_written' => 'a:6:{s:9:"ChangeLog";s:4:"2afe";s:10:"README.txt";s:4:"ee2d";s:12:"ext_icon.gif";s:4:"4d2b";s:17:"ext_localconf.php";s:4:"8a72";s:14:"doc/manual.sxw";s:4:"c75d";s:40:"xclass/class.user_t3lib_tsparser_ext.php";s:4:"b66a";}',
+	'_md5_values_when_last_written' => 'a:6:{s:9:"ChangeLog";s:4:"44da";s:10:"README.txt";s:4:"ee2d";s:12:"ext_icon.gif";s:4:"4d2b";s:17:"ext_localconf.php";s:4:"8a72";s:14:"doc/manual.sxw";s:4:"c75d";s:40:"xclass/class.user_t3lib_tsparser_ext.php";s:4:"561c";}',
 	'suggests' => array(
 	),
 );
