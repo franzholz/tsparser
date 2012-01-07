@@ -3,7 +3,7 @@
 ########################################################################
 # Extension Manager/Repository config file for ext "tsparser".
 #
-# Auto generated 06-12-2011 19:40
+# Auto generated 10-12-2011 15:20
 #
 # Manual updates:
 # Only the data in the array - everything else is removed by next
@@ -29,10 +29,10 @@ $EM_CONF[$_EXTKEY] = array(
 	'clearCacheOnLoad' => 0,
 	'lockType' => '',
 	'author_company' => 'jambage.com',
-	'version' => '0.0.2',
+	'version' => '0.0.3',
 	'constraints' => array(
 		'depends' => array(
-			'typo3' => '3.8.0-4.4.99',
+			'typo3' => '3.8.0-4.6.99',
 		),
 		'conflicts' => array(
 		),
