@@ -1,8 +1,10 @@
 <?php
+namespace JambageCom\Tsparser\TypoScript;
+
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 1999-2009 Kasper Skaarhoj (kasperYYYY@typo3.com)
+*  (c) 1999-2013 Kasper Skaarhoj (kasperYYYY@typo3.com)
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -43,18 +45,18 @@
  * @package TYPO3
  * @subpackage tsparser
  */
-class ux_t3lib_tsparser_ext extends t3lib_tsparser_ext {
-
+class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplateService {
 	/**
 	 * [Describe function...]
 	 *
-	 * @param	[type]		$http_post_vars: ...
-	 * @param	[type]		$http_post_files: ...
-	 * @param	[type]		$theConstants: ...
-	 * @param	[type]		$tplRow: ...
-	 * @return	[type]		...
+	 * @param 	[type]		$http_post_vars: ...
+	 * @param 	array (not used anymore)
+	 * @param 	[type]		$theConstants: ...
+	 * @param 	[type]		$tplRow: ...
+	 * @return 	[type]		...
+	 * @todo Define visibility
 	 */
-	function ext_procesInput($http_post_vars, $http_post_files, $theConstants, $tplRow) {
+	public function ext_procesInput ($http_post_vars, $http_post_files, $theConstants, $tplRow) {
 		$data = $http_post_vars['data'];
 		$check = $http_post_vars['check'];
 		$copyResource = $http_post_vars['_copyResource'];
@@ -67,30 +69,46 @@ class ux_t3lib_tsparser_ext extends t3lib_tsparser_ext {
 		if (is_array($data)) {
 			foreach ($data as $key => $var) {
 				if (isset($theConstants[$key])) {
-					if ($this->ext_dontCheckIssetValues || isset($check[$key])) { // If checkbox is set, update the value
-						list($var) = explode(LF, $var); // exploding with linebreak, just to make sure that no multiline input is given!
+					// If checkbox is set, update the value
+					if ($this->ext_dontCheckIssetValues || isset($check[$key])) {
+						// Exploding with linebreak, just to make sure that no multiline input is given!
+						list($var) = explode(LF, $var);
 						$typeDat = $this->ext_getTypeData($theConstants[$key]['type']);
 						switch ($typeDat['type']) {
 							case 'int':
 								if ($typeDat['paramstr']) {
-									$var =
-										(class_exists('t3lib_utility_Math') ?
-											t3lib_utility_Math::forceIntegerInRange($var, $typeDat['params'][0], $typeDat['params'][1]) :
-											t3lib_div::intInRange($var, $typeDat['params'][0], $typeDat['params'][1])
-										);
+
+									$var = '';
+									if (class_exists('\\TYPO3\\CMS\\Core\\Utility\\MathUtility')) {
+										$var = \TYPO3\CMS\Core\Utility\MathUtility::forceIntegerInRange($var, $typeDat['params'][0], $typeDat['params'][1]);
+									} else {
+										$var =
+											(
+												class_exists('\\TYPO3\\CMS\\t3lib_utility_Math') ?
+													\TYPO3\CMS\t3lib_utility_Math::forceIntegerInRange($var, $typeDat['params'][0], $typeDat['params'][1]) :
+													\TYPO3\CMS\t3lib_div::intInRange($var, $typeDat['params'][0], $typeDat['params'][1])
+											);
+									}
 								} else {
 									$var = intval($var);
 								}
 							break;
 							case 'int+':
 							case 'eint+':
-								if ($typeDat['type'] == 'int+' || isset($var))	{
+								if ($typeDat['type'] == 'int+' || isset($var)) {
 									$var = max(0, intval($var));
 								}
 								break;
 							case 'color':
 								$col = array();
-								if ($var && !t3lib_div::inList($this->HTMLcolorList, strtolower($var))) {
+								$bInList = '';
+								if (class_exists('\\TYPO3\\CMS\\Core\\Utility\\GeneralUtility')) {
+									$bInList = \TYPO3\CMS\Core\Utility\GeneralUtility::inList($this->HTMLcolorList, strtolower($var));
+								} else {
+									$bInList = \TYPO3\CMS\t3lib_div::inList($this->HTMLcolorList, strtolower($var));
+								}
+
+								if ($var && !$bInList) {
 									$var = preg_replace('/[^A-Fa-f0-9]*/', '', $var);
 									$useFullHex = strlen($var) > 3;
 
@@ -104,11 +122,10 @@ class ux_t3lib_tsparser_ext extends t3lib_tsparser_ext {
 										$col[] = HexDec(substr($var, 5, 1));
 									}
 
-									$var = substr('0' . DecHex($col[0]), -1) . substr('0' . DecHex($col[1]), -1) . substr('0' . DecHex($col[2]), -1);
-									if ($useFullHex) {
-										$var .= substr('0' . DecHex($col[3]), -1) . substr('0' . DecHex($col[4]), -1) . substr('0' . DecHex($col[5]), -1);
+									$var = substr(('0' . DecHex($col[0])), -1) . substr(('0' . DecHex($col[1])), -1) . substr(('0' . DecHex($col[2])), -1);
+									if ($useFulHex) {
+										$var .= substr(('0' . DecHex($col[3])), -1) . substr(('0' . DecHex($col[4])), -1) . substr(('0' . DecHex($col[5])), -1);
 									}
-
 									$var = '#' . strtoupper($var);
 								}
 							break;
@@ -169,9 +186,11 @@ class ux_t3lib_tsparser_ext extends t3lib_tsparser_ext {
 						}
 
 						if ($this->ext_printAll || strcmp($theConstants[$key]['value'], $var)) {
-							$this->ext_putValueInConf($key, $var); // Put value in, if changed.
+							// Put value in, if changed.
+							$this->ext_putValueInConf($key, $var);
 						}
-						unset($check[$key]); // Remove the entry because it has been "used"
+						// Remove the entry because it has been "used"
+						unset($check[$key]);
 					} else {
 						$this->ext_removeValueInConf($key);
 					}
@@ -189,11 +208,6 @@ class ux_t3lib_tsparser_ext extends t3lib_tsparser_ext {
 			}
 		}
 	}
-}
-
-
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/tsparser/xclass/class.user_t3lib_tsparser_ext.php']) {
-	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/tsparser/xclass/class.user_t3lib_tsparser_ext.php']);
 }
 
 ?>
