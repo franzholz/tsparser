@@ -11,8 +11,6 @@ if (TYPO3_MODE == 'BE') {
 			t3lib_div::int_from_ver(TYPO3_version)
 	);
 
-	debug ($typoVersion, 'Version von TYPO3: $typoVersion');
-
 	if ($typoVersion >= '6000000') {
 		$GLOBALS['TYPO3_CONF_VARS']['SYS']['Objects']['TYPO3\\CMS\\Core\\TypoScript\\ExtendedTemplateService'] = array(
 		'className' => 'JambageCom\\Tsparser\\TypoScript\\ExtendedTemplateService',
