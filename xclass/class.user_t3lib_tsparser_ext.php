@@ -54,7 +54,7 @@ class ux_t3lib_tsparser_ext extends t3lib_tsparser_ext {
 	 * @param	[type]		$tplRow: ...
 	 * @return	[type]		...
 	 */
-	function ext_procesInput($http_post_vars, $http_post_files, $theConstants, $tplRow) {
+	public function ext_procesInput($http_post_vars, $http_post_files, $theConstants, $tplRow) {
 		$data = $http_post_vars['data'];
 		$check = $http_post_vars['check'];
 		$copyResource = $http_post_vars['_copyResource'];
@@ -84,7 +84,7 @@ class ux_t3lib_tsparser_ext extends t3lib_tsparser_ext {
 							break;
 							case 'int+':
 							case 'eint+':
-								if ($typeDat['type'] == 'int+' || isset($var))	{
+								if ($typeDat['type'] == 'int+' || strlen($var)) {
 									$var = max(0, intval($var));
 								}
 								break;

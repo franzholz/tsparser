@@ -56,16 +56,14 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
 	 * @return 	[type]		...
 	 * @todo Define visibility
 	 */
-	public function ext_procesInput ($http_post_vars, $http_post_files, $theConstants, $tplRow) {
+	public function ext_procesInput($http_post_vars, $http_post_files, $theConstants, $tplRow) {
 		$data = $http_post_vars['data'];
 		$check = $http_post_vars['check'];
-		$copyResource = $http_post_vars['_copyResource'];
 		$Wdata = $http_post_vars['Wdata'];
 		$W2data = $http_post_vars['W2data'];
 		$W3data = $http_post_vars['W3data'];
 		$W4data = $http_post_vars['W4data'];
 		$W5data = $http_post_vars['W5data'];
-
 		if (is_array($data)) {
 			foreach ($data as $key => $var) {
 				if (isset($theConstants[$key])) {
@@ -77,70 +75,49 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
 						switch ($typeDat['type']) {
 							case 'int':
 								if ($typeDat['paramstr']) {
-
-									$var = '';
-									if (class_exists('\\TYPO3\\CMS\\Core\\Utility\\MathUtility')) {
-										$var = \TYPO3\CMS\Core\Utility\MathUtility::forceIntegerInRange($var, $typeDat['params'][0], $typeDat['params'][1]);
-									} else {
-										$var =
-											(
-												class_exists('\\TYPO3\\CMS\\t3lib_utility_Math') ?
-													\TYPO3\CMS\t3lib_utility_Math::forceIntegerInRange($var, $typeDat['params'][0], $typeDat['params'][1]) :
-													\TYPO3\CMS\t3lib_div::intInRange($var, $typeDat['params'][0], $typeDat['params'][1])
-											);
-									}
+									$var = \TYPO3\CMS\Core\Utility\MathUtility::forceIntegerInRange($var, $typeDat['params'][0], $typeDat['params'][1]);
 								} else {
 									$var = intval($var);
 								}
-							break;
+								break;
 							case 'int+':
 							case 'eint+':
-								if ($typeDat['type'] == 'int+' || isset($var)) {
+								if ($typeDat['type'] == 'int+' || strlen($var)) {
 									$var = max(0, intval($var));
 								}
 								break;
 							case 'color':
 								$col = array();
-								$bInList = '';
-								if (class_exists('\\TYPO3\\CMS\\Core\\Utility\\GeneralUtility')) {
-									$bInList = \TYPO3\CMS\Core\Utility\GeneralUtility::inList($this->HTMLcolorList, strtolower($var));
-								} else {
-									$bInList = \TYPO3\CMS\t3lib_div::inList($this->HTMLcolorList, strtolower($var));
-								}
-
-								if ($var && !$bInList) {
+								if ($var && !\TYPO3\CMS\Core\Utility\GeneralUtility::inList($this->HTMLcolorList, strtolower($var))) {
 									$var = preg_replace('/[^A-Fa-f0-9]*/', '', $var);
-									$useFullHex = strlen($var) > 3;
-
+									$useFulHex = strlen($var) > 3;
 									$col[] = HexDec(substr($var, 0, 1));
 									$col[] = HexDec(substr($var, 1, 1));
 									$col[] = HexDec(substr($var, 2, 1));
-
-									if ($useFullHex) {
+									if ($useFulHex) {
 										$col[] = HexDec(substr($var, 3, 1));
 										$col[] = HexDec(substr($var, 4, 1));
 										$col[] = HexDec(substr($var, 5, 1));
 									}
-
 									$var = substr(('0' . DecHex($col[0])), -1) . substr(('0' . DecHex($col[1])), -1) . substr(('0' . DecHex($col[2])), -1);
 									if ($useFulHex) {
 										$var .= substr(('0' . DecHex($col[3])), -1) . substr(('0' . DecHex($col[4])), -1) . substr(('0' . DecHex($col[5])), -1);
 									}
 									$var = '#' . strtoupper($var);
 								}
-							break;
+								break;
 							case 'comment':
 								if ($var) {
 									$var = '#';
 								} else {
 									$var = '';
 								}
-							break;
+								break;
 							case 'wrap':
 								if (isset($Wdata[$key])) {
 									$var .= '|' . $Wdata[$key];
 								}
-							break;
+								break;
 							case 'offset':
 								if (isset($Wdata[$key])) {
 									$var = intval($var) . ',' . intval($Wdata[$key]);
@@ -157,34 +134,13 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
 										}
 									}
 								}
-							break;
+								break;
 							case 'boolean':
 								if ($var) {
 									$var = $typeDat['paramstr'] ? $typeDat['paramstr'] : 1;
 								}
-							break;
-							case 'file':
-								if (!$this->ext_noCEUploadAndCopying) {
-									if ($http_post_files['upload_data']['name'][$key] && $http_post_files['upload_data']['tmp_name'][$key] != 'none') {
-										$var = $this->upload_copy_file(
-											$typeDat,
-											$tplRow,
-											trim($http_post_files['upload_data']['name'][$key]),
-											$http_post_files['upload_data']['tmp_name'][$key]
-										);
-									}
-									if ($copyResource[$key]) {
-										$var = $this->upload_copy_file(
-											$typeDat,
-											$tplRow,
-											basename($copyResource[$key]),
-											$copyResource[$key]
-										);
-									}
-								}
-							break;
+								break;
 						}
-
 						if ($this->ext_printAll || strcmp($theConstants[$key]['value'], $var)) {
 							// Put value in, if changed.
 							$this->ext_putValueInConf($key, $var);
@@ -197,8 +153,7 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
 				}
 			}
 		}
-
-			// Remaining keys in $check indicates fields that are just clicked "on" to be edited. Therefore we get the default value and puts that in the template as a start...
+		// Remaining keys in $check indicates fields that are just clicked "on" to be edited. Therefore we get the default value and puts that in the template as a start...
 		if (!$this->ext_dontCheckIssetValues && is_array($check)) {
 			foreach ($check as $key => $var) {
 				if (isset($theConstants[$key])) {
