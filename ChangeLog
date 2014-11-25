@@ -1,5 +1,13 @@
 (add new changes on top of this file)
 
+2014-02-25 Franz Holzinger  <franz@ttproducts.de>
+
+	* workaround for bug #55727
+
+2014-01-09 Franz Holzinger  <franz@ttproducts.de>
+
+	* Update for TYPO3 6.2.0beta3 and later
+
 2013-10-01 Franz Holzinger  <franz@ttproducts.de>
 
 	* Update for TYPO3 6.1.5 and later
