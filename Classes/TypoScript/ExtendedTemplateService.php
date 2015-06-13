@@ -37,6 +37,10 @@ namespace JambageCom\Tsparser\TypoScript;
  */
 
 
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Utility\MathUtility;
+
+
 
 /**
  * TSParser extension class to t3lib_TStemplate
@@ -75,7 +79,7 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
 						switch ($typeDat['type']) {
 							case 'int':
 								if ($typeDat['paramstr']) {
-									$var = \TYPO3\CMS\Core\Utility\MathUtility::forceIntegerInRange($var, $typeDat['params'][0], $typeDat['params'][1]);
+									$var = MathUtility::forceIntegerInRange($var, $typeDat['params'][0], $typeDat['params'][1]);
 								} else {
 									$var = intval($var);
 								}
@@ -88,16 +92,16 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
 								break;
 							case 'color':
 								$col = array();
-								if ($var && !\TYPO3\CMS\Core\Utility\GeneralUtility::inList($this->HTMLcolorList, strtolower($var))) {
+								if ($var && !GeneralUtility::inList($this->HTMLcolorList, strtolower($var))) {
 									$var = preg_replace('/[^A-Fa-f0-9]*/', '', $var);
 									$useFulHex = strlen($var) > 3;
-									$col[] = HexDec(substr($var, 0, 1));
-									$col[] = HexDec(substr($var, 1, 1));
-									$col[] = HexDec(substr($var, 2, 1));
+									$col[] = HexDec($var[0]);
+									$col[] = HexDec($var[1]);
+									$col[] = HexDec($var[2]);
 									if ($useFulHex) {
-										$col[] = HexDec(substr($var, 3, 1));
-										$col[] = HexDec(substr($var, 4, 1));
-										$col[] = HexDec(substr($var, 5, 1));
+										$col[] = HexDec($var[3]);
+										$col[] = HexDec($var[4]);
+										$col[] = HexDec($var[5]);
 									}
 									$var = substr(('0' . DecHex($col[0])), -1) . substr(('0' . DecHex($col[1])), -1) . substr(('0' . DecHex($col[2])), -1);
 									if ($useFulHex) {
@@ -141,7 +145,7 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
 								}
 								break;
 						}
-						if ($this->ext_printAll || strcmp($theConstants[$key]['value'], $var)) {
+						if ($this->ext_printAll || (string)$theConstants[$key]['value'] !== (string)$var) {
 							// Put value in, if changed.
 							$this->ext_putValueInConf($key, $var);
 						}

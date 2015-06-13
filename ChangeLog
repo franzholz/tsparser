@@ -1,5 +1,9 @@
 (add new changes on top of this file)
 
+2015-06-13 Franz Holzinger  <franz@ttproducts.de>
+
+	* ready for TYPO3 7.2
+
 2014-02-25 Franz Holzinger  <franz@ttproducts.de>
 
 	* workaround for bug #55727
