@@ -50,15 +50,15 @@ use TYPO3\CMS\Core\Utility\MathUtility;
  * @subpackage tsparser
  */
 class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplateService {
+
 	/**
-	 * [Describe function...]
+	 * Proces input
 	 *
-	 * @param 	[type]		$http_post_vars: ...
-	 * @param 	array (not used anymore)
-	 * @param 	[type]		$theConstants: ...
-	 * @param 	[type]		$tplRow: ...
-	 * @return 	[type]		...
-	 * @todo Define visibility
+	 * @param array $http_post_vars
+	 * @param array $http_post_files (not used anymore)
+	 * @param array $theConstants
+	 * @param array $tplRow Not used
+	 * @return void
 	 */
 	public function ext_procesInput($http_post_vars, $http_post_files, $theConstants, $tplRow) {
 		$data = $http_post_vars['data'];
