@@ -81,13 +81,13 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
 								if ($typeDat['paramstr']) {
 									$var = MathUtility::forceIntegerInRange($var, $typeDat['params'][0], $typeDat['params'][1]);
 								} else {
-									$var = intval($var);
+									$var = (int)$var;
 								}
 								break;
 							case 'int+':
 							case 'eint+':
 								if ($typeDat['type'] == 'int+' || strlen($var)) {
-									$var = max(0, intval($var));
+									$var = max(0, (int)$var);
 								}
 								break;
 							case 'color':
@@ -124,15 +124,15 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
 								break;
 							case 'offset':
 								if (isset($Wdata[$key])) {
-									$var = intval($var) . ',' . intval($Wdata[$key]);
+									$var = (int)$var . ',' . (int)$Wdata[$key];
 									if (isset($W2data[$key])) {
-										$var .= ',' . intval($W2data[$key]);
+										$var .= ',' . (int)$W2data[$key];
 										if (isset($W3data[$key])) {
-											$var .= ',' . intval($W3data[$key]);
+											$var .= ',' . (int)$W3data[$key];
 											if (isset($W4data[$key])) {
-												$var .= ',' . intval($W4data[$key]);
+												$var .= ',' . (int)$W4data[$key];
 												if (isset($W5data[$key])) {
-													$var .= ',' . intval($W5data[$key]);
+													$var .= ',' . (int)$W5data[$key];
 												}
 											}
 										}
@@ -169,4 +169,3 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
 	}
 }
 
-?>

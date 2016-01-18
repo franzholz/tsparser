@@ -16,4 +16,3 @@ if (
 		t3lib_extMgm::extPath('tsparser') . 'xclass/class.user_t3lib_tsparser_ext.php';
 }
 
-?>
