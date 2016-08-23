@@ -29,7 +29,6 @@ namespace JambageCom\Tsparser\TypoScript;
 /**
  * TSParser extension class to t3lib_TStemplate
  *
- * $Id$
  * Contains functions for the TS module in TYPO3 backend
  *
  * @author	Kasper Skaarhoj <kasperYYYY@typo3.com>
@@ -157,7 +156,8 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
 				}
 			}
 		}
-		// Remaining keys in $check indicates fields that are just clicked "on" to be edited. Therefore we get the default value and puts that in the template as a start...
+        // Remaining keys in $check indicates fields that are just clicked "on" to be edited.
+        // Therefore we get the default value and puts that in the template as a start...
 		if (!$this->ext_dontCheckIssetValues && is_array($check)) {
 			foreach ($check as $key => $var) {
 				if (isset($theConstants[$key])) {
