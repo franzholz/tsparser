@@ -91,7 +91,7 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
                                 }
                                 break;
                             case 'color':
-                                $col = [];
+                                $col = array();
                                 if ($var) {
                                     $var = preg_replace('/[^A-Fa-f0-9]*/', '', $var);
                                     $useFulHex = strlen($var) > 3;
