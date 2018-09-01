@@ -1,38 +1,17 @@
 <?php
 namespace JambageCom\Tsparser\TypoScript;
 
-/***************************************************************
-*  Copyright notice
-*
-*  (c) 1999-2017 Kasper Skaarhoj (kasperYYYY@typo3.com)
-*  All rights reserved
-*
-*  This script is part of the TYPO3 project. The TYPO3 project is
-*  free software; you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation; either version 2 of the License, or
-*  (at your option) any later version.
-*
-*  The GNU General Public License can be found at
-*  http://www.gnu.org/copyleft/gpl.html.
-*  A copy is found in the textfile GPL.txt and important notices to the license
-*  from the author is found in LICENSE.txt distributed with these scripts.
-*
-*
-*  This script is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  This copyright notice MUST APPEAR in all copies of the script!
-***************************************************************/
-/**
- * TSParser extension class to \TYPO3\CMS\Core\TypoScript\ExtendedTemplateService
+/*
+ * This file is part of the TYPO3 CMS project.
  *
- * Contains functions for the TS module in TYPO3 backend
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
  *
- * @author	Kasper Skaarhoj <kasperYYYY@typo3.com>
- * @author	Franz Holzinger <franz@ttproducts.de>
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
  */
 
 
@@ -40,24 +19,20 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 
 
-
 /**
  * TSParser extension class to \TYPO3\CMS\Core\TypoScript\ExtendedTemplateService
- *
- * @author	Kasper Skaarhoj <kasperYYYY@typo3.com>
- * @package TYPO3
- * @subpackage tsparser
+ * Contains functions for the TS module in TYPO3 backend
  */
+
 class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplateService {
 
     /**
-     * Proces input
+     * Process input
      *
      * @param array $http_post_vars
      * @param array $http_post_files (not used anymore)
      * @param array $theConstants
      * @param array $tplRow Not used
-     * @return void
      */
     public function ext_procesInput($http_post_vars, $http_post_files, $theConstants, $tplRow)
     {
@@ -91,7 +66,7 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
                                 }
                                 break;
                             case 'color':
-                                $col = array();
+                                $col = [];
                                 if ($var) {
                                     $var = preg_replace('/[^A-Fa-f0-9]*/', '', $var);
                                     $useFulHex = strlen($var) > 3;
@@ -103,9 +78,9 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
                                         $col[] = hexdec($var[4]);
                                         $col[] = hexdec($var[5]);
                                     }
-                                    $var = substr(('0' . dechex($col[0])), -1) . substr(('0' . dechex($col[1])), -1) . substr(('0' . dechex($col[2])), -1);
+                                    $var = substr('0' . dechex($col[0]), -1) . substr('0' . dechex($col[1]), -1) . substr('0' . dechex($col[2]), -1);
                                     if ($useFulHex) {
-                                        $var .= substr(('0' . dechex($col[3])), -1) . substr(('0' . dechex($col[4])), -1) . substr(('0' . dechex($col[5])), -1);
+                                        $var .= substr('0' . dechex($col[3]), -1) . substr('0' . dechex($col[4]), -1) . substr('0' . dechex($col[5]), -1);
                                     }
                                     $var = '#' . strtoupper($var);
                                 }
