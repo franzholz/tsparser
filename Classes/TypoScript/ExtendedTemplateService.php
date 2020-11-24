@@ -49,12 +49,12 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
                     // If checkbox is set, update the value
                     if ($this->ext_dontCheckIssetValues || isset($check[$key])) {
                         // Exploding with linebreak, just to make sure that no multiline input is given!
-                        list($var) = explode(LF, $var);
+                        [$var] = explode(LF, $var);
                         $typeDat = $this->ext_getTypeData($theConstants[$key]['type']);
                         switch ($typeDat['type']) {
                             case 'int':
                                 if ($typeDat['paramstr']) {
-                                    $var = MathUtility::forceIntegerInRange($var, $typeDat['params'][0], $typeDat['params'][1]);
+                                    $var = MathUtility::forceIntegerInRange((int)$var, $typeDat['params'][0], $typeDat['params'][1]);
                                 } else {
                                     $var = (int)$var;
                                 }
@@ -68,15 +68,15 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
                             case 'color':
                                 $col = [];
                                 if ($var) {
-                                    $var = preg_replace('/[^A-Fa-f0-9]*/', '', $var);
+                                    $var = preg_replace('/[^A-Fa-f0-9]*/', '', $var) ?? '';
                                     $useFulHex = strlen($var) > 3;
-                                    $col[] = hexdec($var[0]);
-                                    $col[] = hexdec($var[1]);
-                                    $col[] = hexdec($var[2]);
+                                    $col[] = (int)hexdec($var[0]);
+                                    $col[] = (int)hexdec($var[1]);
+                                    $col[] = (int)hexdec($var[2]);
                                     if ($useFulHex) {
-                                        $col[] = hexdec($var[3]);
-                                        $col[] = hexdec($var[4]);
-                                        $col[] = hexdec($var[5]);
+                                        $col[] = (int)hexdec($var[3]);
+                                        $col[] = (int)hexdec($var[4]);
+                                        $col[] = (int)hexdec($var[5]);
                                     }
                                     $var = substr('0' . dechex($col[0]), -1) . substr('0' . dechex($col[1]), -1) . substr('0' . dechex($col[2]), -1);
                                     if ($useFulHex) {
@@ -87,9 +87,9 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
                                 break;
                             case 'comment':
                                 if ($var) {
-                                    $var = '#';
-                                } else {
                                     $var = '';
+                                } else {
+                                    $var = '#';
                                 }
                                 break;
                             case 'wrap':
@@ -116,7 +116,7 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
                                 break;
                             case 'boolean':
                                 if ($var) {
-                                    $var = $typeDat['paramstr'] ? $typeDat['paramstr'] : 1;
+                                    $var = $typeDat['paramstr'] ?: 1;
                                 }
                                 break;
                         }
@@ -143,5 +143,6 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
             }
         }
     }
-}
 
+
+}
