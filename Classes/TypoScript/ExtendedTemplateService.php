@@ -44,7 +44,6 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
         $W4data = $http_post_vars['W4data'] ?? [];
         $W5data = $http_post_vars['W5data'] ?? [];
         if (is_array($data)) {
-        if (is_array($data)) {
             foreach ($data as $key => $var) {
                 if (isset($theConstants[$key])) {
                     // If checkbox is set, update the value
