@@ -35,9 +35,6 @@ class ConstantConfigurationParser extends \TYPO3\CMS\Core\TypoScript\Parser\Cons
      */
     protected function buildConfigurationArray(array $configurationOption): array
     {
-throw new Exception('HIER 2 +++');
-
-   error_log('buildConfigurationArray $configurationOption ' . print_r($configurationOption, true) . PHP_EOL, 3, '/home/www/p610741/html/typo3/typo3temp/logs/debug_error.log');
         $hierarchicConfiguration = [];
         if (str_starts_with((string)$configurationOption['type'], 'user')) {
             $configurationOption = $this->extractInformationForConfigFieldsOfTypeUser($configurationOption);
@@ -86,8 +83,6 @@ throw new Exception('HIER 2 +++');
     /* DELETE this: */
     public function getConfigurationAsValuedArray(string $rawConfiguration): array
     {
-throw new Exception('HIER 1 +++');
-   error_log('getConfigurationAsValuedArray $rawConfiguration ' . print_r($rawConfiguration, true) . PHP_EOL, 3, '/home/www/p610741/html/typo3/typo3temp/logs/debug_error.log');
         $typoScriptParser = new TypoScriptParser();
         $typoScriptParser->regComments = true;
         $typoScriptParser->parse($rawConfiguration);
@@ -105,6 +100,5 @@ throw new Exception('HIER 1 +++');
         }
         return $theConstants;
     }
-
 }
 
