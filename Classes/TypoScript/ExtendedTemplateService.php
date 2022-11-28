@@ -25,6 +25,18 @@ use TYPO3\CMS\Core\Utility\MathUtility;
  */
 
 class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplateService {
+    /**
+     * Don't change
+     *
+     * @var int
+     */
+    public $ext_dontCheckIssetValues = 0;
+
+    /**
+     * @var int
+     */
+    public $ext_printAll = 0;
+
 
     /**
      * Process input
@@ -53,7 +65,7 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
                         $typeDat = $this->ext_getTypeData($theConstants[$key]['type']);
                         switch ($typeDat['type']) {
                             case 'int':
-                                if ($typeDat['paramstr']) {
+                                if (!empty($typeDat['paramstr'])) {
                                     $var = MathUtility::forceIntegerInRange((int)$var, $typeDat['params'][0], $typeDat['params'][1]);
                                 } else {
                                     $var = (int)$var;
@@ -116,7 +128,7 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
                                 break;
                             case 'boolean':
                                 if ($var) {
-                                    $var = $typeDat['paramstr'] ?: 1;
+                                    $var = !empty($typeDat['paramstr']) ? $typeDat['paramstr'] : 1;
                                 }
                                 break;
                         }
