@@ -1,14 +1,17 @@
 <?php
 defined('TYPO3_MODE') || die('Access denied.');
 
-$GLOBALS['TYPO3_CONF_VARS']['SYS']['Objects']['TYPO3\\CMS\\Core\\TypoScript\\ExtendedTemplateService'] =
-    [
-        'className' => 'JambageCom\\Tsparser\\TypoScript\\ExtendedTemplateService',
-    ];
+call_user_func(function ()
+{
+    $GLOBALS['TYPO3_CONF_VARS']['SYS']['Objects'][\TYPO3\CMS\Core\TypoScript\ExtendedTemplateService::class] =
+        [
+            'className' => \JambageCom\Tsparser\TypoScript\ExtendedTemplateService::class
+        ];
 
-$GLOBALS['TYPO3_CONF_VARS']['SYS']['Objects']['TYPO3\\CMS\\Core\\TypoScript\\Parser\\ConstantConfigurationParser'] =
-    [
-        'className' => 'JambageCom\\Tsparser\\TypoScript\\Parser\\ConstantConfigurationParser'
-    ];
+    $GLOBALS['TYPO3_CONF_VARS']['SYS']['Objects'][\TYPO3\CMS\Core\TypoScript\Parser\ConstantConfigurationParser::class] =
+        [
+            'className' => \JambageCom\Tsparser\TypoScript\Parser\ConstantConfigurationParser::class
+        ];
+});
 
 

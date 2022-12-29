@@ -55,18 +55,17 @@ class ConstantConfigurationParser extends \TYPO3\CMS\Core\TypoScript\Parser\Cons
             isset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['tsparser']['configurationParser']) &&
             is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['tsparser']['configurationParser'])
         ) {
-            $_params =
-                [
-                    'configurationOption' => $configurationOption,
-                    'extensionKey' => $extensionKey
-                ];
-
-            foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['tsparser']['configurationParser'] as $classRef) {
+            foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['tsparser']['configurationParser'] as $extensionKey => $classRef) {
                 $hookObject= GeneralUtility::makeInstance($classRef);
                 if (
                     is_object($hookObject) &&
                     method_exists($hookObject, 'buildConfigurationArray')
                 ) {
+                    $_params =
+                        [
+                            'configurationOption' => $configurationOption,
+                            'extensionKey' => $extensionKey
+                        ];
                     $hookObject->buildConfigurationArray($_params, $this);
                 }
             }
@@ -78,27 +77,6 @@ class ConstantConfigurationParser extends \TYPO3\CMS\Core\TypoScript\Parser\Cons
         $configurationOption['subcat_name'] = ($configurationOption['subcat_name'] ?? false) ?: '__default';
         $hierarchicConfiguration[$configurationOption['cat']][$configurationOption['subcat_name']][$configurationOption['name']] = $configurationOption;
         return $hierarchicConfiguration;
-    }
-
-    /* DELETE this: */
-    public function getConfigurationAsValuedArray(string $rawConfiguration): array
-    {
-        $typoScriptParser = new TypoScriptParser();
-        $typoScriptParser->regComments = true;
-        $typoScriptParser->parse($rawConfiguration);
-        $flatSetup = ArrayUtility::flatten($typoScriptParser->setup, '', true);
-        $theConstants = $this->parseComments($flatSetup);
-
-        // Loop through configuration items, see if it is assigned to a sub category
-        // and add the sub category label to the item property if so.
-        foreach ($theConstants as $configurationOptionName => $configurationOption) {
-            if (
-                array_key_exists('subcat_name', $configurationOption) && isset($this->subCategories[$configurationOption['subcat_name']][0])
-            ) {
-                $theConstants[$configurationOptionName]['subcat_label'] = $this->subCategories[$configurationOption['subcat_name']][0];
-            }
-        }
-        return $theConstants;
     }
 }
 

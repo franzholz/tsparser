@@ -128,7 +128,7 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
                                 break;
                             case 'boolean':
                                 if ($var) {
-                                    $var = !empty($typeDat['paramstr']) ? $typeDat['paramstr'] : 1;
+                                    $var = $typeDat['paramstr'] ?? 1;
                                 }
                                 break;
                         }
