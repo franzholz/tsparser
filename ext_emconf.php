@@ -14,11 +14,11 @@ $EM_CONF[$_EXTKEY] = [
     'state' => 'stable',
     'clearCacheOnLoad' => 0,
     'author_company' => 'jambage.com',
-    'version' => '0.9.0',
+    'version' => '0.10.0',
     'constraints' => [
         'depends' => [
-            'php' => '7.2.0-8.1.99',
-            'typo3' => '10.4.0-11.5.99',
+            'php' => '8.0.0-8.1.99',
+            'typo3' => '10.4.0-12.5.99',
         ],
         'conflicts' => [
         ],
