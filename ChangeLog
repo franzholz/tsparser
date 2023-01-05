@@ -1,3 +1,7 @@
+2023-01-05 Franz Holzinger  <franz@ttproducts.de>
+
+    * Follow the explanations in extension patch_install_tool to get this extension working.
+
 2022-12-29 Franz Holzinger  <franz@ttproducts.de>
 
     * bugfix in ConstantConfigurationParser
