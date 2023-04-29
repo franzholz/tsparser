@@ -18,7 +18,7 @@ Just install the extension together with any other extension which supports this
 This will enable new types for the template constants. This extension is only needed 
 if you use the Constant Editor to edit the template constants.
 Be aware that this extension is using code which overwrites the TYPO3 Core file
-:file:`TYPO3\CMS\Core\TypoScript\ExtendedTemplateService.php`. 
+'TYPO3\CMS\Core\TypoScript\ExtendedTemplateService.php'. 
 This could lead to a misbehaviour of the TYPO3 Constant Editor in case of an error.
 
 Reference
@@ -33,7 +33,7 @@ Syntax:
 Constant Editor Types:
 ~~~~~~~~~~~~~~~~~~~~~~
 
-See `Constant Editor https://docs.typo3.org/m/typo3/reference-typoscript/main/en-us/UsingSetting/TheConstantEditor.html`__ 
+See Constant Editor <https://docs.typo3.org/m/typo3/reference-typoscript/main/en-us/UsingSetting/TheConstantEditor.html> 
 chapter 'type' for a complete list of all possible constants types.
 
 new:
@@ -46,7 +46,7 @@ new:
 Examples:
 """""""""
 Make the category empty. This will not use a default category and it will allow all products of all categories.
-Configure the behaviour of the Constant Editor in the file constants.txt  of your TYPO3 extension.
+Configure the behaviour of the Constant Editor in the file 'constants.txt' of the folder 'Configuration/TypoScript/PluginSetup/' or any subfolder of it for your TYPO3 extension.
 
     # cat=plugin.products//; type=eint+; label=default category ID: ID of the default category that will be shown in the list view when no tt_products[cat] parameter is given
     defaultCategoryID =
