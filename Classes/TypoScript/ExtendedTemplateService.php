@@ -46,15 +46,15 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
      * @param array $theConstants
      * @param array $tplRow Not used
      */
-    public function ext_procesInput($http_post_vars, $http_post_files, $theConstants, $tplRow)
+    public function ext_procesInput($_POST, $_FILES, $theConstants, $tplRow)
     {
-        $data = $http_post_vars['data'];
-        $check = $http_post_vars['check'];
-        $Wdata = $http_post_vars['Wdata'] ?? [];
-        $W2data = $http_post_vars['W2data'] ?? [];
-        $W3data = $http_post_vars['W3data'] ?? [];
-        $W4data = $http_post_vars['W4data'] ?? [];
-        $W5data = $http_post_vars['W5data'] ?? [];
+        $data = $_POST['data'];
+        $check = $_POST['check'];
+        $Wdata = $_POST['Wdata'] ?? [];
+        $W2data = $_POST['W2data'] ?? [];
+        $W3data = $_POST['W3data'] ?? [];
+        $W4data = $_POST['W4data'] ?? [];
+        $W5data = $_POST['W5data'] ?? [];
         if (is_array($data)) {
             foreach ($data as $key => $var) {
                 if (isset($theConstants[$key])) {
