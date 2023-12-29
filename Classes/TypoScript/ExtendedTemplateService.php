@@ -46,7 +46,7 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
      * @param array $theConstants
      * @param array $tplRow Not used
      */
-    public function ext_procesInput($_POST, $_FILES, $theConstants, $tplRow)
+    public function ext_procesInput($_POST, $_FILES, $theConstants, $tplRow): void
     {
         $data = $_POST['data'];
         $check = $_POST['check'];

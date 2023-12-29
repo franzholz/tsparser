@@ -40,5 +40,14 @@
     "typo3/cms": {
       "extension-key": "tsparser"
     }
+  },
+  "require-dev": {
+    "rector/rector": "^0.18.13"
+  },
+  "config": {
+    "allow-plugins": {
+      "typo3/cms-composer-installers": true,
+      "typo3/class-alias-loader": true
+    }
   }
 }
