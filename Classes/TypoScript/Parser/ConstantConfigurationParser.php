@@ -1,6 +1,6 @@
 <?php
-namespace JambageCom\Tsparser\TypoScript\Parser;
 
+namespace JambageCom\Tsparser\TypoScript\Parser;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -25,7 +25,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class ConstantConfigurationParser extends \TYPO3\CMS\Core\TypoScript\Parser\ConstantConfigurationParser
 {
-
     /**
      * Builds a configuration array from each line (option) of the config file.
      * Helper method for getConfigurationPreparedForView()
@@ -49,14 +48,14 @@ class ConstantConfigurationParser extends \TYPO3\CMS\Core\TypoScript\Parser\Cons
             }
         }
 
-    // new begin
-            // Call processing function for the labels
+        // new begin
+        // Call processing function for the labels
         if (
             isset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['tsparser']['configurationParser']) &&
             is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['tsparser']['configurationParser'])
         ) {
             foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['tsparser']['configurationParser'] as $extensionKey => $classRef) {
-                $hookObject= GeneralUtility::makeInstance($classRef);
+                $hookObject = GeneralUtility::makeInstance($classRef);
                 if (
                     is_object($hookObject) &&
                     method_exists($hookObject, 'buildConfigurationArray')
@@ -71,7 +70,7 @@ class ConstantConfigurationParser extends \TYPO3\CMS\Core\TypoScript\Parser\Cons
             }
             $configurationOption = $_params['configurationOption'];
         }
-    // new end
+        // new end
 
         $configurationOption['labels'] = GeneralUtility::trimExplode(':', $configurationOption['label'], false, 2);
         $configurationOption['subcat_name'] = ($configurationOption['subcat_name'] ?? false) ?: '__default';
@@ -79,4 +78,3 @@ class ConstantConfigurationParser extends \TYPO3\CMS\Core\TypoScript\Parser\Cons
         return $hierarchicConfiguration;
     }
 }
-

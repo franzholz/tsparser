@@ -1,8 +1,8 @@
 <?php
+
 defined('TYPO3') || die('Access denied.');
 
-call_user_func(function (): void
-{
+call_user_func(function (): void {
     $GLOBALS['TYPO3_CONF_VARS']['SYS']['Objects'][\TYPO3\CMS\Core\TypoScript\ExtendedTemplateService::class] =
         [
             'className' => \JambageCom\Tsparser\TypoScript\ExtendedTemplateService::class

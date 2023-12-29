@@ -1,4 +1,5 @@
 <?php
+
 namespace JambageCom\Tsparser\TypoScript;
 
 /*
@@ -18,13 +19,13 @@ namespace JambageCom\Tsparser\TypoScript;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 
-
 /**
  * TSParser extension class to \TYPO3\CMS\Core\TypoScript\ExtendedTemplateService
  * Contains functions for the TS module in TYPO3 backend
  */
 
-class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplateService {
+class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplateService
+{
     /**
      * Don't change
      *

@@ -13,7 +13,7 @@ $EM_CONF[$_EXTKEY] = [
     'author_email' => 'franz@ttproducts.de',
     'state' => 'stable',
     'author_company' => 'jambage.com',
-    'version' => '0.12.0',
+    'version' => '0.12.1',
     'constraints' => [
         'depends' => [
             'php' => '8.0.0-8.4.99',
@@ -26,4 +26,3 @@ $EM_CONF[$_EXTKEY] = [
         ],
     ],
 ];
-
