@@ -1,6 +1,9 @@
+2024-03-19 Franz Holzinger  <franz@ttproducts.de>
+    * bugfix TYPO3 11.5: remove class member variables $ext_dontCheckIssetValues and $ext_printAll
+
 2023-04-28 Franz Holzinger  <franz@ttproducts.de>
 
-    * compatibility Deprecation no.92947: replace TYPO3_MODE by TYPO3 
+    * compatibility Deprecation no.92947: replace TYPO3_MODE by TYPO3
     * It is still not ready for TYPO3 12.x, because the class \TYPO3\CMS\Core\TypoScript\ExtendedTemplateService is not there any more.
 
 2023-01-05 Franz Holzinger  <franz@ttproducts.de>

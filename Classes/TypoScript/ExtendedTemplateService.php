@@ -27,19 +27,6 @@ use TYPO3\CMS\Core\Utility\MathUtility;
 class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplateService
 {
     /**
-     * Don't change
-     *
-     * @var int
-     */
-    public $ext_dontCheckIssetValues = 0;
-
-    /**
-     * @var int
-     */
-    public $ext_printAll = 0;
-
-
-    /**
      * Process input
      *
      * @param array $http_post_vars
@@ -47,20 +34,20 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
      * @param array $theConstants
      * @param array $tplRow Not used
      */
-    public function ext_procesInput($_POST, $_FILES, $theConstants, $tplRow): void
+    public function ext_procesInput($http_post_vars, $http_post_files, $theConstants, $tplRow): void
     {
-        $data = $_POST['data'];
-        $check = $_POST['check'];
-        $Wdata = $_POST['Wdata'] ?? [];
-        $W2data = $_POST['W2data'] ?? [];
-        $W3data = $_POST['W3data'] ?? [];
-        $W4data = $_POST['W4data'] ?? [];
-        $W5data = $_POST['W5data'] ?? [];
+        $data = $http_post_vars['data'] ?? null;
+        $check = $http_post_vars['check'] ?? [];
+        $Wdata = $http_post_vars['Wdata'] ?? [];
+        $W2data = $http_post_vars['W2data'] ?? [];
+        $W3data = $http_post_vars['W3data'] ?? [];
+        $W4data = $http_post_vars['W4data'] ?? [];
+        $W5data = $http_post_vars['W5data'] ?? [];
         if (is_array($data)) {
             foreach ($data as $key => $var) {
                 if (isset($theConstants[$key])) {
                     // If checkbox is set, update the value
-                    if ($this->ext_dontCheckIssetValues || isset($check[$key])) {
+                    if (isset($check[$key])) {
                         // Exploding with linebreak, just to make sure that no multiline input is given!
                         [$var] = explode(LF, $var);
                         $typeDat = $this->ext_getTypeData($theConstants[$key]['type']);
@@ -133,7 +120,7 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
                                 }
                                 break;
                         }
-                        if ($this->ext_printAll || (string)$theConstants[$key]['value'] !== (string)$var) {
+                        if ((string)($theConstants[$key]['value'] ?? '') !== (string)$var) {
                             // Put value in, if changed.
                             $this->ext_putValueInConf($key, $var);
                         }
@@ -147,12 +134,10 @@ class ExtendedTemplateService extends \TYPO3\CMS\Core\TypoScript\ExtendedTemplat
         }
         // Remaining keys in $check indicates fields that are just clicked "on" to be edited.
         // Therefore we get the default value and puts that in the template as a start...
-        if (!isset($this->ext_dontCheckIssetValues) || !$this->ext_dontCheckIssetValues) {
-            foreach ($check ?? [] as $key => $var) {
-                if (isset($theConstants[$key])) {
-                    $dValue = $theConstants[$key]['default_value'];
-                    $this->ext_putValueInConf($key, $dValue);
-                }
+        foreach ($check ?? [] as $key => $var) {
+            if (isset($theConstants[$key])) {
+                $dValue = $theConstants[$key]['default_value'];
+                $this->ext_putValueInConf($key, $dValue);
             }
         }
     }
