@@ -1,0 +1,12 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  JambageCom\Tsparser\:
+    resource: '../Classes/'
+
+  JambageCom\Tsparser\Tstemplate\Controller\ConstantEditorController:
+    public: true
+

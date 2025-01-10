@@ -13,11 +13,11 @@ $EM_CONF[$_EXTKEY] = [
     'author_email' => 'franz@ttproducts.de',
     'state' => 'stable',
     'author_company' => 'jambage.com',
-    'version' => '0.12.1',
+    'version' => '0.13.0',
     'constraints' => [
         'depends' => [
             'php' => '8.0.0-8.4.99',
-            'typo3' => '11.5.0-12.5.99',
+            'typo3' => '12.4.0-13.4.99',
         ],
         'conflicts' => [
         ],

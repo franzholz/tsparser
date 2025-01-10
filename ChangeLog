@@ -1,3 +1,6 @@
+2025-01-10 Franz Holzinger  <franz@ttproducts.de>
+    * support for TYPO3 13
+
 2024-03-19 Franz Holzinger  <franz@ttproducts.de>
     * bugfix TYPO3 11.5: remove class member variables $ext_dontCheckIssetValues and $ext_printAll
 
