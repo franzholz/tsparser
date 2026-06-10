@@ -22,8 +22,8 @@
     "GPL-2.0-or-later"
   ],
   "require": {
-    "php": "^8.0",
-    "typo3/cms-core": "^12.0 || ^13.0"
+    "php": "^8.2",
+    "typo3/cms-core": "^12.4 || ^13.4"
   },
   "suggest": {
     "bugfix/patch-install-tool": "^0.1"
@@ -38,7 +38,11 @@
   },
   "extra": {
     "typo3/cms": {
-      "extension-key": "tsparser"
+      "extension-key": "tsparser",
+      "version": "0.13.1",
+      "Package": {
+          "providesPackages": {}
+      }
     }
   },
   "require-dev": {
