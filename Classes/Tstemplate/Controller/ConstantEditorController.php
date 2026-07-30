@@ -24,6 +24,7 @@ use TYPO3\CMS\Core\Utility\MathUtility;
  * Contains functions for the TS module in TYPO3 backend
  */
 
+#[AsController]
 class ConstantEditorController extends \TYPO3\CMS\Tstemplate\Controller\ConstantEditorController
 {
     private function updateTemplateConstants(ServerRequestInterface $request, array $constantDefinitions, string $rawTemplateConstants): ?array
