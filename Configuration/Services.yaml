@@ -4,9 +4,12 @@ services:
     autoconfigure: true
     public: false
 
+  # Discover all extension classes cleanly using the exact directory path
   JambageCom\Tsparser\:
     resource: '../Classes/'
 
-  JambageCom\Tsparser\Tstemplate\Controller\ConstantEditorController:
+  # Simple and clean service definition mapping the connection pool
+  JambageCom\Tsparser\TsTemplate\Controller\ConstantEditorController:
+    arguments:
+      $connectionPool: '@TYPO3\CMS\Core\Database\ConnectionPool'
     public: true
-

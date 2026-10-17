@@ -1,0 +1,32 @@
+<html xmlns:f="http://typo3.org" data-namespace-typo3-fluid="true">
+
+<div class="form-section">
+    <div class="form-group">
+        <label for="constant-{constant.name}" class="t3js-formengine-label">
+            <strong>{constant.label}</strong>
+            <span class="text-muted small">[{constant.name}]</span>
+        </label>
+
+        <div class="form-control-wrap">
+            <!--
+                Using HTML5 type="number" with min="0" to enforce the positive
+                integer range for tt_products while natively allowing empty strings.
+            -->
+            <input
+                type="number"
+                id="constant-{constant.name}"
+                name="data[{constant.name}]"
+                value="{constant.value}"
+                min="{f:if(condition: constant.typeIntMin, then: constant.typeIntMin, else: 0)}"
+                max="{f:if(condition: constant.typeIntMax, then: constant.typeIntMax, else: '')}"
+                class="form-control"
+            />
+        </div>
+
+        <f:if condition="{constant.description}">
+            <p class="help-block text-muted small">{constant.description -> f:format.nl2br()}</p>
+        </f:if>
+    </div>
+</div>
+
+</html>
