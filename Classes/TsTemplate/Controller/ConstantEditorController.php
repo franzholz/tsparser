@@ -4,6 +4,8 @@ namespace JambageCom\Tsparser\TsTemplate\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class ConstantEditorController
 {
@@ -40,7 +42,7 @@ class ConstantEditorController
                 }
                 debug('E');
 
-                // 2. Extract eint+ fields strictly from the active page Typoscript
+                // 2. Extract eint+ fields strictly from the active page Typoscript AND static files
                 $statistics = $this->analyzeActiveEintPlusFields($templateRecords);
 
                 // 3. Write statistical tracking line to the text file
@@ -105,42 +107,86 @@ class ConstantEditorController
     }
 
     /**
-     * Scans the active constants-text blocks for type=eint+ attributes.
+     * Scans both the active constants-text blocks and included static files for type=eint+ attributes.
      */
     protected function analyzeActiveEintPlusFields(array $templates): array
     {
         $fields = [];
-        foreach ($templates as $template) {
-            $constantsText = $template['constants'] ?? '';
+        $pattern = '/#\s*cat=([^;\s\/]+)[^#]*?type\s*=\s*eint\+.*?[\r\n]+\s*([a-zA-Z0-9_.-]+)\s*=/is';
 
-            if (empty($constantsText)) {
-                continue;
+        foreach ($templates as $template) {
+            // Build a text pool for this template containing DB content and static files
+            $textBlocksToScan = [];
+
+            // A) Add database constants field
+            if (!empty($template['constants'])) {
+                $textBlocksToScan[] = $template['constants'];
             }
 
-            $pattern = '/#\s*cat=([^;\s\/]+)[^#]*?type\s*=\s*eint\+.*?[\r\n]+\s*([a-zA-Z0-9_-]+)\s*=/is';
+            // B) Evaluate and read included static extension templates
+            if (!empty($template['include_static_file'])) {
+                $staticIncludes = GeneralUtility::trimExplode(',', $template['include_static_file'], true);
 
-            if (preg_match_all($pattern, $constantsText, $matches, PREG_SET_ORDER)) {
-                foreach ($matches as $match) {
-                    // FIXED: Accessing the explicit capture groups indices 1 and 2 from the match array
-                    $category = isset($match[1]) ? trim($match[1]) : '';
-                    $variable = isset($match[2]) ? trim($match[2]) : '';
-                    if ($category !== '' && $variable !== '') {
-                        $fields[] = $category . '.' . $variable;
+                foreach ($staticIncludes as $include) {
+                    if (str_starts_with($include, 'EXT:')) {
+                        // Extract the extension key from the inclusion path (e.g., EXT:fluid_styled_content/...)
+                        $parts = explode('/', substr($include, 4));
+                        $extKey = $parts[0] ?? '';
+
+                        if (!empty($extKey) && ExtensionManagementUtility::isLoaded($extKey)) {
+                            try {
+                                $extPath = ExtensionManagementUtility::extPath($extKey);
+
+                                // Check standard paths for TypoScript constants files in TYPO3
+                                $possibleFiles = [
+                                    $extPath . 'Configuration/TypoScript/constants.txt',
+                                    $extPath . 'Configuration/TypoScript/constants.typoscript',
+                                    $extPath . 'constants.txt'
+                                ];
+
+                                foreach ($possibleFiles as $file) {
+                                    if (file_exists($file)) {
+                                        $content = file_get_contents($file);
+                                        if (!empty($content)) {
+                                            $textBlocksToScan[] = $content;
+                                        }
+                                    }
+                                }
+                            } catch (\InvalidArgumentException $e) {
+                                // Silently skip if extension path cannot be resolved
+                            }
+                        }
+                    }
+                }
+            }
+
+            // C) Parse all gathered text blocks using the regular expression pattern
+            foreach ($textBlocksToScan as $textBlock) {
+                if (preg_match_all($pattern, $textBlock, $matches, PREG_SET_ORDER)) {
+                    foreach ($matches as $match) {
+                        $category = isset($match[1]) ? trim($match[1]) : '';
+                        $variable = isset($match[2]) ? trim($match[2]) : '';
+                        if ($category !== '' && $variable !== '') {
+                            // Generates target format like "plugin.tx_ext.settings.feld"
+                            $fields[] = $category . '.' . $variable;
+                        }
                     }
                 }
             }
         }
 
+        $uniqueFields = array_unique($fields);
+
         return [
-            'fields' => array_unique($fields),
-            'count' => count(array_unique($fields))
+            'fields' => $uniqueFields,
+            'count' => count($uniqueFields)
         ];
     }
 
     protected function logStatistics(array $statistics, int $pageId, string $logPath): void
     {
         $logContent = sprintf(
-            "[%s] Statistics - Unique eint+ fields detected: %d (%s)\n",
+            "[%s] Statistics - Unique eint+ fields detected for Page %d: %d (%s)\n",
             date('Y-m-d H:i:s'),
             $pageId,
             $statistics['count'],
