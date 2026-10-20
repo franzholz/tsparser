@@ -6,17 +6,17 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use JambageCom\Tsparser\TsTemplate\Controller\ConstantEditorController;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class ConstantEditorInterceptor implements MiddlewareInterface
+class ConstantEditorMiddleware implements MiddlewareInterface
 {
-    public function __construct(
-        protected readonly ConstantEditorController $customController
-    ) {}
-
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        // Route the request through your fully-featured custom controller
-        $request = $this->customController->processFormInterception($request);
+        /** @var ConstantEditorController $controller */
+        $controller = GeneralUtility::makeInstance(ConstantEditorController::class);
+
+        // Intercept and potentially modify the request before passing it down the chain
+        $request = $controller->processFormInterception($request);
 
         return $handler->handle($request);
     }

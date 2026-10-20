@@ -1,10 +1,10 @@
 <?php
 return [
     'backend' => [
-        'tsparser/constants-interceptor' => [
-            'target' => \JambageCom\Tsparser\Middleware\ConstantEditorInterceptor::class,
+        'jambage-com/tsparser/form-interception' => [
+            'target' => \JambageCom\Tsparser\Middleware\ConstantEditorMiddleware::class,
             'before' => [
-                'typo3/cms-backend/endpoint-dispatcher',
+                'typo3/cms-backend/backend-routing',
             ],
         ],
     ],

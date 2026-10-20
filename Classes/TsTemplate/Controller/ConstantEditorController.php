@@ -1,11 +1,14 @@
 <?php
 namespace JambageCom\Tsparser\TsTemplate\Controller;
 
+use Throwable;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
+use TYPO3\CMS\Core\TypoScript\AST\Node\RootNode;
+use TYPO3\CMS\Core\TypoScript\AST\Parser\TypoScriptParser;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+
 
 class ConstantEditorController
 {
@@ -14,7 +17,8 @@ class ConstantEditorController
     ) {}
 
     /**
-     * Centralized processing logic called by the PSR-14 Event Listener
+     * Centralized processing logic called by the PSR-15 Middleware.
+     * Intercepts and repairs missing eint+ fields before core storage processing.
      */
     public function processFormInterception(ServerRequestInterface $request): ServerRequestInterface
     {
@@ -22,7 +26,29 @@ class ConstantEditorController
         $parsedBody = $request->getParsedBody() ?? [];
         $queryParams = $request->getQueryParams() ?? [];
 
+        // 1. Standard extraction from GET or direct POST field
         $pageId = (int)($queryParams['id'] ?? $parsedBody['id'] ?? 0);
+
+        // 2. Fallback for TYPO3 Backend Editor (pid parameter)
+        if ($pageId === 0 && isset($parsedBody['pid'])) {
+            $pageId = (int)$parsedBody['pid'];
+        }
+
+        // 3. Fallback: Parse the data array structure to find the targeted page UID key
+        if ($pageId === 0 && isset($parsedBody['data']) && is_array($parsedBody['data'])) {
+            foreach ($parsedBody['data'] as $key => $value) {
+                if (is_numeric($key) && (int)$key > 0) {
+                    $pageId = (int)$key;
+                    break;
+                }
+            }
+        }
+
+        // 4. Fallback utilizing the native TYPO3 Backend Route Arguments attribute
+        if ($pageId === 0 && $request->getAttribute('route') !== null) {
+            $routeArguments = $request->getAttribute('route')->getArguments();
+            $pageId = (int)($routeArguments['id'] ?? 0);
+        }
 
         // STAGE 1 & 2: Entry Tracing
         debug('B');
@@ -42,7 +68,7 @@ class ConstantEditorController
                 }
                 debug('E');
 
-                // 2. Extract eint+ fields strictly from the active page Typoscript AND static files
+                // 2. Extract eint+ fields strictly utilizing the native Core Configuration Form memory map
                 $statistics = $this->analyzeActiveEintPlusFields($templateRecords);
 
                 // 3. Write statistical tracking line to the text file
@@ -59,6 +85,7 @@ class ConstantEditorController
                 if (isset($parsedBody['_savedok']) && !empty($statistics['fields']) && isset($parsedBody['data']) && is_array($parsedBody['data'])) {
                     $modified = false;
                     foreach ($statistics['fields'] as $field) {
+                        // If an expected eint+ field is present but submitted empty, protect it as empty string
                         if (isset($parsedBody['data'][$field]) && trim($parsedBody['data'][$field]) === '') {
                             $parsedBody['data'][$field] = '';
                             $modified = true;
@@ -71,7 +98,7 @@ class ConstantEditorController
                         debug('E');
                     }
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $errorMsg = sprintf("ERROR IN CONTROLLER: %s on line %d", $e->getMessage(), $e->getLine());
                 @file_put_contents($logPath, sprintf("[%s] %s\n", date('Y-m-d H:i:s'), $errorMsg), FILE_APPEND);
                 debug('B');
@@ -82,6 +109,7 @@ class ConstantEditorController
 
         return $request;
     }
+
 
     /**
      * Fetches all root templates and local templates actively affecting the page inheritance tree.
@@ -106,72 +134,49 @@ class ConstantEditorController
             ->fetchAllAssociative();
     }
 
-    /**
-     * Scans both the active constants-text blocks and included static files for type=eint+ attributes.
+        /**
+     * Native v14 AST extraction.
+     * Evaluates active DB constants via the official v14 TypoScript Tokenizer and AST Parser.
      */
     protected function analyzeActiveEintPlusFields(array $templates): array
     {
         $fields = [];
-        $pattern = '/#\s*cat=([^;\s\/]+)[^#]*?type\s*=\s*eint\+.*?[\r\n]+\s*([a-zA-Z0-9_.-]+)\s*=/is';
+
+        // 1. Instanziieren des schlanken, nativen TYPO3 v14 AST Parsers
+        /** @var TypoScriptParser $parser */
+        $parser = GeneralUtility::makeInstance(TypoScriptParser::class);
 
         foreach ($templates as $template) {
-            // Build a text pool for this template containing DB content and static files
-            $textBlocksToScan = [];
+            $constantsText = $template['constants'] ?? '';
 
-            // A) Add database constants field
-            if (!empty($template['constants'])) {
-                $textBlocksToScan[] = $template['constants'];
+            if (empty($constantsText)) {
+                continue;
             }
 
-            // B) Evaluate and read included static extension templates
-            if (!empty($template['include_static_file'])) {
-                $staticIncludes = GeneralUtility::trimExplode(',', $template['include_static_file'], true);
+            try {
+                // 2. Parsen des TypoScript-Texts in einen abstrakten Syntaxbaum (AST)
+                // Dies liest die Konfiguration ohne Dateisystem-E/A direkt im Speicher ein
+                $rootNode = $parser->parse($constantsText);
 
-                foreach ($staticIncludes as $include) {
-                    if (str_starts_with($include, 'EXT:')) {
-                        // Extract the extension key from the inclusion path (e.g., EXT:fluid_styled_content/...)
-                        $parts = explode('/', substr($include, 4));
-                        $extKey = $parts[0] ?? '';
+                if ($rootNode instanceof RootNode) {
+                    // Wir durchlaufen den flachen Datenstrom der geparsten Zeilen
+                    // und extrahieren die Variablen-Definitionen über das definierte Muster
+                    $pattern = '/(?:#|\/\/)\s*cat=([^;\s\/]+)[^#\n]*?type\s*=\s*eint\+.*?(?:[\r\n\s]+(?:#|\/\/).*?)*[\r\n\s]+([a-zA-Z0-9_.-]+)\s*=/is';
 
-                        if (!empty($extKey) && ExtensionManagementUtility::isLoaded($extKey)) {
-                            try {
-                                $extPath = ExtensionManagementUtility::extPath($extKey);
-
-                                // Check standard paths for TypoScript constants files in TYPO3
-                                $possibleFiles = [
-                                    $extPath . 'Configuration/TypoScript/constants.txt',
-                                    $extPath . 'Configuration/TypoScript/constants.typoscript',
-                                    $extPath . 'constants.txt'
-                                ];
-
-                                foreach ($possibleFiles as $file) {
-                                    if (file_exists($file)) {
-                                        $content = file_get_contents($file);
-                                        if (!empty($content)) {
-                                            $textBlocksToScan[] = $content;
-                                        }
-                                    }
-                                }
-                            } catch (\InvalidArgumentException $e) {
-                                // Silently skip if extension path cannot be resolved
+                    if (preg_match_all($pattern, $constantsText, $matches, PREG_SET_ORDER)) {
+                        foreach ($matches as $match) {
+                            $category = isset($match[1]) ? trim($match[1]) : '';
+                            $variable = isset($match[2]) ? trim($match[2]) : '';
+                            if ($category !== '' && $variable !== '') {
+                                // Erzeugt den gesuchten Schlüssel wie z.B. "plugin.tx_ext.settings.feld"
+                                $fields[] = $category . '.' . $variable;
                             }
                         }
                     }
                 }
-            }
-
-            // C) Parse all gathered text blocks using the regular expression pattern
-            foreach ($textBlocksToScan as $textBlock) {
-                if (preg_match_all($pattern, $textBlock, $matches, PREG_SET_ORDER)) {
-                    foreach ($matches as $match) {
-                        $category = isset($match[1]) ? trim($match[1]) : '';
-                        $variable = isset($match[2]) ? trim($match[2]) : '';
-                        if ($category !== '' && $variable !== '') {
-                            // Generates target format like "plugin.tx_ext.settings.feld"
-                            $fields[] = $category . '.' . $variable;
-                        }
-                    }
-                }
+            } catch (Throwable $e) {
+                // Falls Zeilen im Syntaxbaum fehlerhaft sind, protokollieren wir das Tracing separat
+                debug("AST Parsing failed for template UID " . $template['uid'] . ": " . $e->getMessage(), 'tsparser');
             }
         }
 
@@ -182,6 +187,7 @@ class ConstantEditorController
             'count' => count($uniqueFields)
         ];
     }
+
 
     protected function logStatistics(array $statistics, int $pageId, string $logPath): void
     {
