@@ -5,8 +5,7 @@ use Throwable;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\TypoScript\AST\Node\RootNode;
-use TYPO3\CMS\Core\TypoScript\AST\Parser\TypoScriptParser;
+use TYPO3\CMS\Core\TypoScript\TypoScriptService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 
@@ -134,17 +133,17 @@ class ConstantEditorController
             ->fetchAllAssociative();
     }
 
-        /**
-     * Native v14 AST extraction.
-     * Evaluates active DB constants via the official v14 TypoScript Tokenizer and AST Parser.
+    /**
+     * Native v14 extraction utilizing the core TypoScriptService map.
+     * Bypasses file system scanning by accessing already processed core structures.
      */
     protected function analyzeActiveEintPlusFields(array $templates): array
     {
         $fields = [];
 
-        // 1. Instanziieren des schlanken, nativen TYPO3 v14 AST Parsers
-        /** @var TypoScriptParser $parser */
-        $parser = GeneralUtility::makeInstance(TypoScriptParser::class);
+        // 1. Instanziieren des offiziellen v14 TypoScriptServices
+        /** @var TypoScriptService $typoScriptService */
+        $typoScriptService = GeneralUtility::makeInstance(TypoScriptService::class);
 
         foreach ($templates as $template) {
             $constantsText = $template['constants'] ?? '';
@@ -153,30 +152,27 @@ class ConstantEditorController
                 continue;
             }
 
+            // 2. Wir konvertieren den bereits geladenen TS-String in ein strukturiertes Array
             try {
-                // 2. Parsen des TypoScript-Texts in einen abstrakten Syntaxbaum (AST)
-                // Dies liest die Konfiguration ohne Dateisystem-E/A direkt im Speicher ein
-                $rootNode = $parser->parse($constantsText);
+                $constantsArray = $typoScriptService->convertTypoScriptStringToPlainArray($constantsText);
 
-                if ($rootNode instanceof RootNode) {
-                    // Wir durchlaufen den flachen Datenstrom der geparsten Zeilen
-                    // und extrahieren die Variablen-Definitionen über das definierte Muster
-                    $pattern = '/(?:#|\/\/)\s*cat=([^;\s\/]+)[^#\n]*?type\s*=\s*eint\+.*?(?:[\r\n\s]+(?:#|\/\/).*?)*[\r\n\s]+([a-zA-Z0-9_.-]+)\s*=/is';
+                // 3. Zeilenbasierte Extraktion der Definitionen aus dem Datenbank-Feld
+                // Matcht: # cat=basic/enable/eint+; type=eint+; label=Test
+                // gefolgt von der Variablenzuweisung in der nächsten Zeile
+                $pattern = '/(?:#|\/\/)\s*cat=([^;\s\/]+)[^#\n]*?type\s*=\s*eint\+.*?(?:[\r\n\s]+(?:#|\/\/).*?)*[\r\n\s]+([a-zA-Z0-9_.-]+)\s*=/is';
 
-                    if (preg_match_all($pattern, $constantsText, $matches, PREG_SET_ORDER)) {
-                        foreach ($matches as $match) {
-                            $category = isset($match[1]) ? trim($match[1]) : '';
-                            $variable = isset($match[2]) ? trim($match[2]) : '';
-                            if ($category !== '' && $variable !== '') {
-                                // Erzeugt den gesuchten Schlüssel wie z.B. "plugin.tx_ext.settings.feld"
-                                $fields[] = $category . '.' . $variable;
-                            }
+                if (preg_match_all($pattern, $constantsText, $matches, PREG_SET_ORDER)) {
+                    foreach ($matches as $match) {
+                        $category = isset($match[1]) ? trim($match[1]) : '';
+                        $variable = isset($match) ? trim($match) : '';
+                        if ($category !== '' && $variable !== '') {
+                            // Generiert den gesuchten Schlüssel wie z.B. "plugin.tx_ext.settings.feld"
+                            $fields[] = $category . '.' . $variable;
                         }
                     }
                 }
             } catch (Throwable $e) {
-                // Falls Zeilen im Syntaxbaum fehlerhaft sind, protokollieren wir das Tracing separat
-                debug("AST Parsing failed for template UID " . $template['uid'] . ": " . $e->getMessage(), 'tsparser');
+                debug("Conversion failed for template UID " . $template['uid'] . ": " . $e->getMessage(), 'tsparser');
             }
         }
 
@@ -187,7 +183,6 @@ class ConstantEditorController
             'count' => count($uniqueFields)
         ];
     }
-
 
     protected function logStatistics(array $statistics, int $pageId, string $logPath): void
     {
