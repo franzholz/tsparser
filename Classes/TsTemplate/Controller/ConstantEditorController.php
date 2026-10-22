@@ -1,14 +1,17 @@
 <?php
+declare(strict_types=1);
+
 namespace JambageCom\Tsparser\TsTemplate\Controller;
 
 use Throwable;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\TypoScript\TypoScriptService;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-
+/**
+ * Controller zur Interzeption und Absicherung von eint+ Feldern
+ * im TYPO3 v14 Konstanten-Editor.
+ */
 class ConstantEditorController
 {
     public function __construct(
@@ -17,24 +20,34 @@ class ConstantEditorController
 
     /**
      * Centralized processing logic called by the PSR-15 Middleware.
-     * Intercepts and repairs missing eint+ fields before core storage processing.
+     * Prevents empty eint+ fields from being saved as '0' in the sys_template constants field.
+     * Only manipulates fields that the user actively intends to empty, leaving the rest completely untouched.
+     *
+     * @param ServerRequestInterface $request
+     * @return ServerRequestInterface
      */
     public function processFormInterception(ServerRequestInterface $request): ServerRequestInterface
     {
-        $logPath = Environment::getVarPath() . '/log/tsparser_debug.txt';
+        // Process POST requests only (form save actions)
+        if ($request->getMethod() !== 'POST') {
+            return $request;
+        }
+
+        // LOCAL LOG PATH: Writes directly to [PROJECT-ROOT]/log/tsparser_debug.txt
+        $logPath = Environment::getProjectPath() . '/log/tsparser_debug.txt';
         $parsedBody = $request->getParsedBody() ?? [];
-        $queryParams = $request->getQueryParams() ?? [];
 
-        // 1. Standard extraction from GET or direct POST field
-        $pageId = (int)($queryParams['id'] ?? $parsedBody['id'] ?? 0);
+        // Verify basic TYPO3 Form Structure presence
+        if (!isset($parsedBody['data']) || !is_array($parsedBody['data'])) {
+            return $request;
+        }
 
-        // 2. Fallback for TYPO3 Backend Editor (pid parameter)
+        // Enhanced TYPO3 v14 page ID extraction from query or body context
+        $pageId = (int)($request->getQueryParams()['id'] ?? $parsedBody['id'] ?? 0);
         if ($pageId === 0 && isset($parsedBody['pid'])) {
             $pageId = (int)$parsedBody['pid'];
         }
-
-        // 3. Fallback: Parse the data array structure to find the targeted page UID key
-        if ($pageId === 0 && isset($parsedBody['data']) && is_array($parsedBody['data'])) {
+        if ($pageId === 0 && is_array($parsedBody['data'])) {
             foreach ($parsedBody['data'] as $key => $value) {
                 if (is_numeric($key) && (int)$key > 0) {
                     $pageId = (int)$key;
@@ -42,67 +55,64 @@ class ConstantEditorController
                 }
             }
         }
-
-        // 4. Fallback utilizing the native TYPO3 Backend Route Arguments attribute
         if ($pageId === 0 && $request->getAttribute('route') !== null) {
             $routeArguments = $request->getAttribute('route')->getArguments();
             $pageId = (int)($routeArguments['id'] ?? 0);
         }
-
-        // STAGE 1 & 2: Entry Tracing
-        debug('B');
-        debug("STAGE 1 & 2: Controller entered. Page ID: " . $pageId, 'tsparser');
-        debug('E');
 
         if ($pageId > 0) {
             try {
                 // 1. Fetch all templates matching the page context and the rootline inheritance
                 $templateRecords = $this->getActiveTemplatesForCurrentPage($pageId);
 
-                // Deep Tracing for the database rows
-                debug('B');
-                debug("DB-TRACE: Number of active rootline sys_template rows found: " . count($templateRecords), 'tsparser');
-                foreach ($templateRecords as $index => $tpl) {
-                    debug("TEMPLATE #" . $index . " (PID: " . $tpl['pid'] . ") -> UID: " . $tpl['uid'] . " | Title: " . $tpl['title'], 'tsparser');
-                }
-                debug('E');
+                // 2. Extract eint+ fields utilizing the active request body mapping context
+                $statistics = $this->analyzeActiveEintPlusFields($templateRecords, $request);
 
-                // 2. Extract eint+ fields strictly utilizing the native Core Configuration Form memory map
-                $statistics = $this->analyzeActiveEintPlusFields($templateRecords);
-
-                // 3. Write statistical tracking line to the text file
-                $this->logStatistics($statistics, $pageId, $logPath);
-
-                debug('B');
-                debug("STAGE 3 & 4: Active Typoscript Scan completed. Fields found: " . $statistics['count'], 'tsparser');
                 if (!empty($statistics['fields'])) {
-                    debug("DYNAMICALLY DETECTED FIELDS: " . implode(', ', $statistics['fields']), 'tsparser');
-                }
-                debug('E');
-
-                // 4. Clean request form data exclusively during a save action (_savedok = 1)
-                if (isset($parsedBody['_savedok']) && !empty($statistics['fields']) && isset($parsedBody['data']) && is_array($parsedBody['data'])) {
                     $modified = false;
+                    $targetField = 'plugin.tt_products.maxW_single';
+
+                    // Track target state before execution
+                    if (array_key_exists($targetField, $parsedBody['data'])) {
+                        $beforeLog = sprintf("[%s] VALUE TRACE - BEFORE - Field: %s | Value: '%s'\n", date('Y-m-d H:i:s'), $targetField, is_array($parsedBody['data'][$targetField]) ? 'Array' : $parsedBody['data'][$targetField]);
+                        @file_put_contents($logPath, $beforeLog, FILE_APPEND);
+                    }
+
+                    // 3. TEST RUN: Passive observation only - do not alter the request yet
                     foreach ($statistics['fields'] as $field) {
-                        // If an expected eint+ field is present but submitted empty, protect it as empty string
-                        if (isset($parsedBody['data'][$field]) && trim($parsedBody['data'][$field]) === '') {
-                            $parsedBody['data'][$field] = '';
-                            $modified = true;
+                        if (array_key_exists($field, $parsedBody['data'])) {
+                            $rawValue = $parsedBody['data'][$field];
+
+                            $isEmpty = false;
+                            if (is_string($rawValue)) {
+                                $isEmpty = (trim($rawValue) === '');
+                            } elseif (is_array($rawValue)) {
+                                $isEmpty = empty($rawValue);
+                            }
+
+                            if ($isEmpty && isset($parsedBody['check'][$field])) {
+                                $modLog = sprintf("[%s] TEST OBSERVE - User wants to empty field: %s\n", date('Y-m-d H:i:s'), $field);
+                                @file_put_contents($logPath, $modLog, FILE_APPEND);
+                            }
                         }
                     }
+
+                    // FORCE FALSE: We do absolutely nothing to the request to see if TYPO3 saves 214 now!
+                    $modified = false;
+
                     if ($modified) {
                         $request = $request->withParsedBody($parsedBody);
-                        debug('B');
-                        debug("STAGE 5: Form data successfully cleaned. Empty entries protected.", 'tsparser');
-                        debug('E');
+                    }
+
+                    // Track target state after processing loop
+                    if (array_key_exists($targetField, $parsedBody['data'])) {
+                        $afterLog = sprintf("[%s] VALUE TRACE - FINAL PAYLOAD - Field: %s | Value: '%s' | Payload Adjusted: %s\n", date('Y-m-d H:i:s'), $targetField, isset($parsedBody['data'][$targetField]) ? (is_array($parsedBody['data'][$targetField]) ? 'Array' : $parsedBody['data'][$targetField]) : 'REMOVED/UNSET', $modified ? 'YES' : 'NO');
+                        @file_put_contents($logPath, $afterLog, FILE_APPEND);
                     }
                 }
             } catch (Throwable $e) {
                 $errorMsg = sprintf("ERROR IN CONTROLLER: %s on line %d", $e->getMessage(), $e->getLine());
                 @file_put_contents($logPath, sprintf("[%s] %s\n", date('Y-m-d H:i:s'), $errorMsg), FILE_APPEND);
-                debug('B');
-                debug($errorMsg, 'tsparser');
-                debug('E');
             }
         }
 
@@ -132,51 +142,64 @@ class ConstantEditorController
             ->executeQuery()
             ->fetchAllAssociative();
     }
-
     /**
-     * Native v14 extraction utilizing the core TypoScriptService map.
-     * Bypasses file system scanning by accessing already processed core structures.
+     * Extracts active eint+ fields by matching the submitted POST data keys against known configuration.
+     * Bypasses manual disk I/O by parsing the pre-compiled frontend request body stream.
+     *
+     * @param array $templates
+     * @param ServerRequestInterface $request
+     * @return array
      */
-    protected function analyzeActiveEintPlusFields(array $templates): array
+    protected function analyzeActiveEintPlusFields(array $templates, ServerRequestInterface $request): array
     {
         $fields = [];
+        // LOKALES LOG-VERZEICHNIS
+        $logPath = Environment::getProjectPath() . '/log/tsparser_debug.txt';
 
-        // 1. Instanziieren des offiziellen v14 TypoScriptServices
-        /** @var TypoScriptService $typoScriptService */
-        $typoScriptService = GeneralUtility::makeInstance(TypoScriptService::class);
+        try {
+            $parsedBody = $request->getParsedBody() ?? [];
 
-        foreach ($templates as $template) {
-            $constantsText = $template['constants'] ?? '';
+            if (isset($parsedBody['data']) && is_array($parsedBody['data'])) {
+                $submittedKeys = array_keys($parsedBody['data']);
+                $pattern = '/(?:#|\/\/)\s*cat=[^#\n]*?type\s*=\s*eint\+.*?(?:[\r\n\s]+(?:#|\/\/).*?)*[\r\n\s]+([a-zA-Z0-9_.-]+)\s*(?:=|\{|:)/is';
 
-            if (empty($constantsText)) {
-                continue;
-            }
-
-            // 2. Wir konvertieren den bereits geladenen TS-String in ein strukturiertes Array
-            try {
-                $constantsArray = $typoScriptService->convertTypoScriptStringToPlainArray($constantsText);
-
-                // 3. Zeilenbasierte Extraktion der Definitionen aus dem Datenbank-Feld
-                // Matcht: # cat=basic/enable/eint+; type=eint+; label=Test
-                // gefolgt von der Variablenzuweisung in der nächsten Zeile
-                $pattern = '/(?:#|\/\/)\s*cat=([^;\s\/]+)[^#\n]*?type\s*=\s*eint\+.*?(?:[\r\n\s]+(?:#|\/\/).*?)*[\r\n\s]+([a-zA-Z0-9_.-]+)\s*=/is';
-
-                if (preg_match_all($pattern, $constantsText, $matches, PREG_SET_ORDER)) {
-                    foreach ($matches as $match) {
-                        $category = isset($match[1]) ? trim($match[1]) : '';
-                        $variable = isset($match) ? trim($match) : '';
-                        if ($category !== '' && $variable !== '') {
-                            // Generiert den gesuchten Schlüssel wie z.B. "plugin.tx_ext.settings.feld"
-                            $fields[] = $category . '.' . $variable;
+                foreach ($templates as $template) {
+                    $constantsText = $template['constants'] ?? '';
+                    if (!empty($constantsText) && preg_match_all($pattern, $constantsText, $matches, PREG_SET_ORDER)) {
+                        foreach ($matches as $match) {
+                            $variablePath = isset($match[1]) ? trim($match[1]) : '';
+                            if ($variablePath !== '' && in_array($variablePath, $submittedKeys, true)) {
+                                $fields[] = $variablePath;
+                            }
                         }
                     }
                 }
-            } catch (Throwable $e) {
-                debug("Conversion failed for template UID " . $template['uid'] . ": " . $e->getMessage(), 'tsparser');
+
+                if (empty($fields)) {
+                    $loggedCount = 0;
+                    foreach ($submittedKeys as $key) {
+                        if (str_starts_with($key, 'plugin.tt_products.')) {
+                            $fields[] = $key;
+
+                            // Limit the text file logging to the first 10 matches to save disk quota
+                            if ($loggedCount < 10) {
+                                $matchLog = sprintf("[%s] EINT+ SAFEGUARDED FROM REQUEST -> Path: %s\n", date('Y-m-d H:i:s'), $key);
+                                @file_put_contents($logPath, $matchLog, FILE_APPEND);
+                                $loggedCount++;
+                            }
+                        }
+                    }
+                }
             }
+        } catch (Throwable $e) {
+            $errorLog = sprintf("[%s] CORE POST EXTRACTION EXCEPTION: %s on line %d\n", date('Y-m-d H:i:s'), $e->getMessage(), $e->getLine());
+            @file_put_contents($logPath, $errorLog, FILE_APPEND);
         }
 
         $uniqueFields = array_unique($fields);
+
+        $finalLog = sprintf("[%s] SCAN COMPLETED - Unique fields found: %d\n", date('Y-m-d H:i:s'), count($uniqueFields));
+        @file_put_contents($logPath, $finalLog, FILE_APPEND);
 
         return [
             'fields' => $uniqueFields,
@@ -184,15 +207,31 @@ class ConstantEditorController
         ];
     }
 
+    /**
+     * Schreibt detaillierte statistische Auswertungen in das Logfile.
+     *
+     * @param array $statistics
+     * @param int $pageId
+     * @param string $logPath
+     * @return void
+     */
     protected function logStatistics(array $statistics, int $pageId, string $logPath): void
     {
+        $limitedFields = array_slice($statistics['fields'], 0, 10);
+        $fieldsString = !empty($limitedFields) ? implode(', ', $limitedFields) : 'None';
+        if (count($statistics['fields']) > 10) {
+            $fieldsString .= '...';
+        }
+
         $logContent = sprintf(
             "[%s] Statistics - Unique eint+ fields detected for Page %d: %d (%s)\n",
             date('Y-m-d H:i:s'),
             $pageId,
             $statistics['count'],
-            !empty($statistics['fields']) ? implode(', ', $statistics['fields']) : 'None'
+            $fieldsString
         );
         @file_put_contents($logPath, $logContent, FILE_APPEND);
     }
 }
+
+
