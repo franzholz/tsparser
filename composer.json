@@ -5,7 +5,7 @@
   "keywords": [
     "TYPO3",
     "extension",
-    "patch"
+    "constant-editor"
   ],
   "support": {
     "issues": "https://github.com/franzholz/tsparser/issues"
@@ -23,10 +23,7 @@
   ],
   "require": {
     "php": "^8.2",
-    "typo3/cms-core": "^12.4 || ^13.4"
-  },
-  "suggest": {
-    "bugfix/patch-install-tool": "^0.1"
+    "typo3/cms-core": "^13.4 || ^14.3"
   },
   "autoload": {
     "psr-4": {
@@ -39,10 +36,7 @@
   "extra": {
     "typo3/cms": {
       "extension-key": "tsparser",
-      "version": "0.13.1",
-      "Package": {
-          "providesPackages": {}
-      }
+      "version": "1.0.0"
     }
   },
   "require-dev": {
@@ -50,8 +44,7 @@
   },
   "config": {
     "allow-plugins": {
-      "typo3/cms-composer-installers": true,
-      "typo3/class-alias-loader": true
+      "typo3/cms-composer-installers": true
     }
   }
 }

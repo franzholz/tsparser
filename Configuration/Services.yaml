@@ -4,9 +4,9 @@ services:
     autoconfigure: true
     public: false
 
-  JambageCom\Tsparser\:
-    resource: '../Classes/'
+  # Core HTML Rendering Service
+  JambageCom\Tsparser\Service\ConstantFieldRenderer: ~
 
-  JambageCom\Tsparser\Tstemplate\Controller\ConstantEditorController:
+  # Dedicated TypoScript entry points (UserFunctions)
+  JambageCom\Tsparser\UserFunction\RenderEintPlus:
     public: true
-
