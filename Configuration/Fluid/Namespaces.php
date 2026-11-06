@@ -1,10 +1,12 @@
 <?php
-
 declare(strict_types=1);
 
+/**
+ * Configuration/Fluid/Namespaces.php
+ * Official TYPO3 v14 way to register global Fluid viewhelper namespaces.
+ */
 return [
     'tsparser' => [
-        'TYPO3\\CMS\\Fluid\\ViewHelpers',
-        'JambageCom\\Tsparser\\ViewHelpers',
+        'JambageCom\\Tsparser\\ViewHelpers'
     ],
 ];

@@ -1,10 +1,20 @@
+# Configuration/Services.yaml
 services:
   _defaults:
     autowire: true
     autoconfigure: true
     public: false
 
-  JambageCom\Tsparser\Hook\ConstantDataMapCleaner:
+  # Core HTML Rendering Service
+  JambageCom\Tsparser\Service\ConstantFieldRenderer: ~
+
+  # Dedicated TypoScript entry points (UserFunctions)
+  JambageCom\Tsparser\UserFunction\RenderEintPlus:
     public: true
+
+  # Native PSR-14 DataHandler Listener for permanent DB storage
+  JambageCom\Tsparser\EventListener\ConstantEditorSaveEventListener:
     tags:
-      - name: 'cms.datahandler'
+      - name: event.listener
+        identifier: 'jambagecom-tsparser-datamap-save'
+        event: TYPO3\CMS\Core\DataHandling\Event\BeforeProcessDatamapEvent
