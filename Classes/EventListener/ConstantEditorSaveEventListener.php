@@ -6,7 +6,7 @@ namespace JambageCom\Tsparser\EventListener;
 
 use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\DataHandling\Event\BeforeProcessDatamapEvent;
-use TYPO3\CMS\Core\Http\ServerRequest;
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Log\LogManager;
 
 class ConstantEditorSaveEventListener
@@ -15,77 +15,39 @@ class ConstantEditorSaveEventListener
 
     public function __construct(LogManager $logManager)
     {
-        // Logger sauber über Dependency Injection / Services.yaml holen
         $this->logger = $logManager->getLogger(__CLASS__);
     }
 
     public function __invoke(BeforeProcessDatamapEvent $event): void
     {
-        // 1. PSR-7 ServerRequest sicher aus den Globals extrahieren
-        $request = $GLOBALS['Request'] ?? null;
-        if (!$request instanceof ServerRequest) {
-            return;
-        }
+        // 1. Establish the local log file target path
+        $logFile = (class_exists(\TYPO3\CMS\Core\Core\Environment::class) ? \TYPO3\CMS\Core\Core\Environment::getProjectPath() : dirname(__DIR__, 4)) . '/log/tsparse.log';
 
-        // 2. Parsed Body (entspricht den validierten POST-Daten) holen
-        $parsedBody = $request->getParsedBody();
-        if (!is_array($parsedBody)) {
-            return;
-        }
+        // 2. Fetch the raw incoming server request states safely
+        $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
+        $parsedBody = $request instanceof ServerRequestInterface ? $request->getParsedBody() : [];
+        $datamap = $event->getDatamap();
 
-        $data = $parsedBody['data'] ?? [];
-        $check = $parsedBody['check'] ?? [];
+        // 3. Construct a clear diagnostic text block containing the exact payload structures
+        $logEntry = sprintf(
+            "========================================================================\n" .
+            "TIMESTAMP: %s\n" .
+            "REQUEST METHOD: %s\n" .
+            "--- RAW POST BODY DATA --- \n%s\n" .
+            "--- RAW POST BODY CHECK --- \n%s\n" .
+            "--- DATAHANDLER DATAMAP STATE IN EVENT --- \n%s\n" .
+            "========================================================================\n",
+            date('Y-m-d H:i:s'),
+            $request instanceof ServerRequestInterface ? $request->getMethod() : 'UNKNOWN',
+            print_r($parsedBody['data'] ?? [], true),
+            print_r($parsedBody['check'] ?? [], true),
+            print_r($datamap['sys_template'] ?? [], true)
+        );
 
-        // 3. Debugging über die TYPO3 PSR-3 Logger API (Exakter Key aus dem Log-Schnitt)
-        $constantKey = 'plugin.tt_products.maxW_single';
+        // 4. Force write to the local log/tsparse.log file structure directly
+        @file_put_contents($logFile, $logEntry, FILE_APPEND);
 
-        if (isset($data[$constantKey])) {
-            $this->logger->debug(sprintf('PSR-7 Request Data für %s: %s', $constantKey, $data[$constantKey]));
-        } else {
-            $this->logger->debug(sprintf('PSR-7 Request Data für %s: NICHT VORHANDEN', $constantKey));
-        }
-
-        $checkValue = $check[$constantKey] ?? 'FEHLT';
-        $this->logger->debug(sprintf('PSR-7 Request Check für %s: %s', $constantKey, $checkValue));
-
-        // 4. Manuelle Rettung der Daten
-        // Wenn der Core 'int+' beim Speichern verwirft, injizieren wir die Daten
-        // hier direkt in den DataHandler-Prozess über das $event.
-        if (isset($data[$constantKey]) && $checkValue === 'checked') {
-            $datamap = $event->getDatamap();
-
-            // Wir prüfen, ob der DataHandler gerade sys_template verarbeitet
-            if (isset($datamap['sys_template']) && is_array($datamap['sys_template'])) {
-                foreach ($datamap['sys_template'] as $id => $fields) {
-                    // Falls der Core den Wert filtert, erzwingen wir die Speicherung.
-                    // TYPO3 v14 verarbeitet geänderte Konstanten im DataHandler
-                    // primär über das Feld 'constants'.
-                    if (isset($fields['constants'])) {
-                        $currentConstants = $fields['constants'];
-
-                        // Einfache Ersetzung oder Ergänzung des geänderten Wertes im TS-String
-                        $pattern = '/(' . preg_quote($constantKey, '/') . '\s*=\s*)[^\r\n]*/';
-                        if (preg_match($pattern, $currentConstants)) {
-                            $datamap['sys_template'][$id]['constants'] = preg_replace($pattern, '${1}' . $data[$constantKey], $currentConstants);
-                        } else {
-                            $datamap['sys_template'][$id]['constants'] .= "\n" . $constantKey . ' = ' . $data[$constantKey];
-                        }
-                    } else {
-                        // Fallback, falls das Feld in der Datamap noch nicht initialisiert war
-                        $datamap['sys_template'][$id]['constants'] = $constantKey . ' = ' . $data[$constantKey];
-                    }
-
-                    $this->logger->debug(sprintf(
-                        'Tsparser Rettung: %s (%s) wurde manuell in sys_template [%s] constants injiziert.',
-                        $constantKey,
-                        $data[$constantKey],
-                        $id
-                    ));
-                }
-
-                // Aktualisierte Datamap zurück an das Event übergeben
-                $event->setDatamap($datamap);
-            }
-        }
+        // Keep the event execution pipeline unhindered for analysis
+        $event->setDatamap($datamap);
     }
 }
