@@ -5,21 +5,19 @@
 TYPO3 extension tsparser
 ========================
 
-What is does
+What it does
 ------------
 
-The current TYPO3 Constant Editor does not support enough types. This extension adds new types in order to have a more sophisticated generation of the template constants.
+The current TYPO3 Constant Editor does not support enough native field types. This extension hooks into the TypoScript processing pipeline to add custom data types, enabling a more sophisticated and precise generation of backend configuration options.
 
 
 Installation
 ------------
 
-Just install the extension together with any other extension which supports this patch. 
-This will enable new types for the template constants. This extension is only needed 
-if you use the Constant Editor to edit the template constants.
-Be aware that this extension is using code which overwrites the TYPO3 Core file
-'TYPO3\CMS\Core\TypoScript\ExtendedTemplateService.php'. 
-This could lead to a misbehaviour of the TYPO3 Constant Editor in case of an error.
+Just install the extension. It works seamlessly out-of-the-box with any modern extension configured to support extended types.
+
+This extension operates fully update-safe and compliant with the native TYPO3 v14 Core database storage layout, avoiding any core overrides or legacy hooks.
+
 
 Reference
 ----------
@@ -27,27 +25,29 @@ Reference
 Syntax:
 ~~~~~~~
 
-   [type=type;]
+Custom types are declared directly inside the TypoScript constant configuration comments using the standardized UserFunction syntax:
+
+.. code-block:: typoscript
+
+   # type=user[JambageCom\Tsparser\UserFunction\RenderEintPlus->render]
 
 
 Constant Editor Types:
 ~~~~~~~~~~~~~~~~~~~~~~
 
-See Constant Editor <https://docs.typo3.org/m/typo3/reference-typoscript/main/en-us/UsingSetting/TheConstantEditor.html> 
-chapter 'type' for a complete list of all possible constants types.
+See the official TYPO3 Constant Editor Documentation <https://typo3.org> for a complete list of native constants types.
 
-new:
+New configuration types provided by this extension:
 
-*   eint+ … empty or integer.
+*   **RenderEintPlus** *(formerly eint+)* … empty or integer.
 
-    If nothing has been entered, then the constants will remain empty. Be aware that an empty 
-    constant means that nothing is intended and that this is different to setting it to 0.
+    If nothing has been entered into the backend field, the constant value remains completely empty in the template. Be aware that an empty constant signifies that *nothing is intended* or configured, which behaves technically different from explicitly setting a value to ``0``.
 
 Examples:
 """""""""
-Make the category empty. This will not use a default category and it will allow all products of all categories.
-Configure the behaviour of the Constant Editor in the file 'constants.txt' of the folder 'Configuration/TypoScript/PluginSetup/' or any subfolder of it for your TYPO3 extension.
+To clear a default configuration value (e.g., allowing all products across all categories by leaving the category filter empty), configure the behavior in your extension's ``constants.typoscript`` file:
 
-    # cat=plugin.products//; type=eint+; label=default category ID: ID of the default category that will be shown in the list view when no tt_products[cat] parameter is given
+.. code-block:: typoscript
+
+    # cat=plugin.products//; type=user[JambageCom\Tsparser\UserFunction\RenderEintPlus->render]; label=default category ID: ID of the default category that will be shown in the list view when no tt_products[cat] parameter is given
     defaultCategoryID =
-
