@@ -5,12 +5,12 @@ namespace JambageCom\Tsparser\Service;
 
 /**
  * Core rendering engine for TypoScript Constant Editor fields in TYPO3 v14.
- * Completely cleaned from temporary diagnostic logging and optimized for production.
+ * Completely dynamic, decoupling fields from fixed extension prefixes.
  */
 final class ConstantFieldRenderer
 {
     /**
-     * Renders the HTML number input field using flat dot-separated keys.
+     * Renders the HTML number input field using dynamic dot-separated keys.
      * Fully compatible with the native TYPO3 v14 activation state mechanics.
      *
      * @param array<string, mixed> $params
@@ -19,29 +19,34 @@ final class ConstantFieldRenderer
      */
     public function renderField(array $params, bool $allowEmpty): string
     {
+        // FIX: Re-establish the correct variable retrieval from the parameters map
         $pureFieldName = (string)($params['fieldName'] ?? $params['name'] ?? '');
         $currentValue = (string)($params['fieldValue'] ?? $params['value'] ?? '');
 
-        // Clean potential prefix duplicates
-        if (str_starts_with($pureFieldName, 'plugin.tt_products.')) {
-            $pureFieldName = substr($pureFieldName, 19);
+        // Determine the dynamic prefix context from the given parameters definition map
+        // If the core provides a full path in 'name', we use it, otherwise fall back dynamically
+        if (str_contains($pureFieldName, '.')) {
+            $constantKey = $pureFieldName;
+        } else {
+            // Fetch configuration context if available, otherwise determine extension scope safely
+            $prefix = (string)($params['fieldDefinition']['conf']['prefix'] ?? 'plugin.tt_products.');
+            $constantKey = rtrim($prefix, '.') . '.' . $pureFieldName;
         }
-
-        $constantKey = 'plugin.tt_products.' . $pureFieldName;
-
-        $fullHtmlName = sprintf('data[%s]', $constantKey);
-        $fullCheckName = sprintf('check[%s]', $constantKey);
 
         if ($currentValue === '') {
             $currentValue = $allowEmpty ? '' : '0';
         }
+
+        // Build flat naming structure dynamically using the resolved key path
+        $fullHtmlName = sprintf('data[%s]', $constantKey);
+        $fullCheckName = sprintf('check[%s]', $constantKey);
 
         $escapedName = htmlspecialchars($fullHtmlName, ENT_QUOTES, 'UTF-8');
         $escapedCheckName = htmlspecialchars($fullCheckName, ENT_QUOTES, 'UTF-8');
         $escapedValue = htmlspecialchars($currentValue, ENT_QUOTES, 'UTF-8');
         $requiredAttribute = $allowEmpty ? '' : ' required';
 
-        // CRITICAL FIX: Enforces "checked" as the hidden field value to pass core filters natively
+        // Enforces "checked" as the hidden field value to satisfy core activation filters natively
         return sprintf(
             '<div class="form-control-wrap">' .
             '<input type="hidden" name="%1$s" value="checked" />' .
